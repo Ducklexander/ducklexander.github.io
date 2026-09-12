@@ -1,0 +1,1613 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta
+      name="description"
+      content="Sob or sniff to flap. A simple microphone-controlled browser game."
+    />
+    <title>Sob to Play Flappy Bird</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23f4f1e8'/%3E%3Cellipse cx='29' cy='32' rx='19' ry='16' fill='none' stroke='%23303730' stroke-width='3'/%3E%3Cpath d='M47 29l12 6-12 4M15 32q10-10 16 2' fill='none' stroke='%23303730' stroke-width='3'/%3E%3Ccircle cx='38' cy='27' r='2'/%3E%3C/svg%3E"
+    />
+    <style>
+      :root {
+        --paper: #ffffff;
+        --ink: #303730;
+        --muted: #646b60;
+        --line: #d3d6ca;
+        --green: #5c7151;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--paper);
+        color: var(--ink);
+        font:
+          15px/1.55 Arial,
+          Helvetica,
+          sans-serif;
+      }
+      button,
+      input,
+      select {
+        font: inherit;
+      }
+      button,
+      summary,
+      select,
+      input {
+        touch-action: manipulation;
+      }
+      button {
+        cursor: pointer;
+        color: inherit;
+      }
+      button:disabled {
+        opacity: 0.45;
+        cursor: default;
+      }
+      button:focus-visible,
+      summary:focus-visible,
+      input:focus-visible,
+      select:focus-visible,
+      canvas:focus-visible {
+        outline: 2px solid var(--green);
+        outline-offset: 4px;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      .page {
+        max-width: 1020px;
+        margin: auto;
+        padding: 36px 30px 24px;
+      }
+      header {
+        padding: 0 0 26px;
+      }
+      h1 {
+        font-size: 32px;
+        font-weight: 600;
+        line-height: 1.2;
+        letter-spacing: -0.8px;
+        margin: 0 0 8px;
+      }
+      header p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 15px;
+      }
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 260px;
+        gap: 30px;
+      }
+      .field {
+        position: relative;
+        border: 1.5px solid var(--ink);
+        border-radius: 4px 7px 5px 3px;
+        overflow: hidden;
+        background: #ffffff;
+      }
+      canvas {
+        display: block;
+        width: 100%;
+        aspect-ratio: 600/510;
+        touch-action: manipulation;
+      }
+      .scorebar {
+        position: absolute;
+        top: 18px;
+        left: 20px;
+        right: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        pointer-events: none;
+        font-size: 10px;
+        letter-spacing: 0.6px;
+      }
+      .scorebar strong {
+        font-size: 28px;
+        font-weight: 500;
+        display: block;
+        line-height: 1.25;
+        margin-top: 3px;
+      }
+      .scorebar .best {
+        text-align: right;
+      }
+      .scorebar .best strong {
+        font-size: 20px;
+      }
+      .overlay {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        padding: 24px;
+        background: var(--paper);
+      }
+      .overlay h2 {
+        font-size: 25px;
+        font-weight: 600;
+        line-height: 1.2;
+        letter-spacing: -0.4px;
+        margin: 18px 0 10px;
+      }
+      .overlay p {
+        max-width: 280px;
+        margin: 0 0 22px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .overlay .eyebrow {
+        font-size: 11px;
+        letter-spacing: 0.5px;
+        color: var(--muted);
+      }
+      .overlay .eyebrow:empty {
+        display: none;
+      }
+      .overlay .bird-doodle {
+        width: 100px;
+        height: 76px;
+        flex-shrink: 0;
+      }
+      .primary {
+        border: 1px solid var(--ink);
+        background: var(--ink);
+        color: var(--paper);
+        padding: 12px 22px;
+        font-size: 14px;
+        font-weight: 500;
+        border-radius: 5px;
+      }
+      .primary:hover {
+        background: var(--green);
+      }
+      .secondary {
+        background: transparent;
+        border: 1px solid var(--line);
+        padding: 8px 13px;
+        font-size: 13px;
+        border-radius: 4px;
+      }
+      .secondary:hover {
+        border-color: var(--ink);
+      }
+      .link-button {
+        border: 0;
+        border-bottom: 1px solid var(--line);
+        background: none;
+        padding: 5px 0;
+        font-size: 13px;
+      }
+      .under-field {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        margin-top: 12px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .under-field button {
+        padding: 7px 12px;
+        font-size: 12px;
+      }
+      .aside {
+        padding-top: 2px;
+      }
+      aside h2 {
+        font-size: 18px;
+        font-weight: 600;
+        line-height: 1.2;
+        margin: 2px 0 23px;
+      }
+      .steps {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 24px;
+        font-size: 14px;
+      }
+      .steps li {
+        display: flex;
+        gap: 12px;
+        margin: 0 0 19px;
+        line-height: 1.45;
+      }
+      .steps .number {
+        color: var(--green);
+        font-size: 12px;
+        padding-top: 2px;
+      }
+      .steps small {
+        display: block;
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 4px;
+      }
+      .control-box {
+        border-top: 1px solid var(--line);
+        padding-top: 20px;
+      }
+      .control-box .primary {
+        width: 100%;
+      }
+      .status {
+        font-size: 12px;
+        line-height: 1.6;
+        min-height: 38px;
+        margin: 12px 0 7px;
+      }
+      .meter {
+        height: 24px;
+        display: flex;
+        gap: 3px;
+        align-items: center;
+        overflow: hidden;
+      }
+      .meter i {
+        flex: 1;
+        height: 15%;
+        min-height: 2px;
+        background: var(--line);
+        transition:
+          height 0.08s,
+          background 0.15s;
+      }
+      .meter.active i {
+        background: var(--green);
+      }
+      .meter-caption {
+        display: flex;
+        justify-content: space-between;
+        font-size: 10px;
+        color: var(--muted);
+        margin-top: 5px;
+      }
+      .hint {
+        font-size: 12px;
+        color: var(--muted);
+        line-height: 1.6;
+        margin: 15px 0;
+      }
+      .progress {
+        display: flex;
+        gap: 6px;
+        margin: 12px 0;
+      }
+      .progress span {
+        height: 4px;
+        background: var(--line);
+        flex: 1;
+      }
+      .progress span.done {
+        background: var(--green);
+      }
+      .adjust {
+        margin-top: 18px;
+        border-top: 1px solid var(--line);
+        padding-top: 12px;
+      }
+      summary {
+        font-size: 13px;
+        cursor: pointer;
+        padding: 5px 0;
+      }
+      label {
+        display: block;
+        font-size: 13px;
+        margin: 14px 0 7px;
+      }
+      input[type="range"] {
+        width: 100%;
+        accent-color: var(--green);
+      }
+      select {
+        width: 100%;
+        background: var(--paper);
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        padding: 9px;
+        font-size: 12px;
+        color: var(--ink);
+      }
+      .range-labels {
+        display: flex;
+        justify-content: space-between;
+        font-size: 10px;
+        color: var(--muted);
+      }
+      .setting-actions {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        margin: 14px 0;
+      }
+      .note {
+        margin: 25px 0 0;
+        display: block;
+        gap: 32px;
+        align-items: start;
+        padding-top: 16px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+      }
+      .note details {
+        margin-bottom: 12px;
+      }
+      .note p {
+        font-size: 13px;
+        max-width: 650px;
+        margin: 10px 0;
+      }
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+      }
+      .overlay.practice {
+        justify-content: flex-end;
+        background: transparent;
+        pointer-events: none;
+        padding-bottom: 24px;
+      }
+      .overlay.practice .bird-doodle,
+      .overlay.practice .eyebrow {
+        display: none;
+      }
+      .overlay.practice h2 {
+        font-size: 20px;
+        margin: 4px;
+      }
+      .overlay.practice p {
+        font-size: 13px;
+        max-width: 330px;
+        margin: 0 0 12px;
+      }
+      .overlay.practice button {
+        pointer-events: auto;
+      }
+      @media (max-width: 850px) {
+        .page {
+          padding: 24px;
+        }
+        .layout {
+          grid-template-columns: 1fr;
+          gap: 25px;
+        }
+        aside {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 0 24px;
+        }
+        aside > h2 {
+          grid-column: 1/-1;
+          margin-bottom: 20px;
+        }
+        .control-box {
+          border-top: 0;
+          padding-top: 0;
+        }
+        .adjust {
+          grid-column: 1/-1;
+        }
+      }
+      @media (max-width: 480px) {
+        .page {
+          padding: 20px 16px;
+        }
+        h1 {
+          font-size: 27px;
+          max-width: 280px;
+        }
+        header {
+          padding-bottom: 22px;
+        }
+        header p {
+          font-size: 13px;
+        }
+        canvas {
+          min-height: 350px;
+        }
+        aside {
+          grid-template-columns: 1fr;
+        }
+        .control-box {
+          border-top: 1px solid var(--line);
+          padding-top: 18px;
+        }
+        .overlay {
+          padding: 20px;
+        }
+        .overlay h2 {
+          font-size: 23px;
+          margin-top: 12px;
+        }
+        .overlay .bird-doodle {
+          height: 60px;
+        }
+        .overlay p {
+          margin-bottom: 17px;
+          font-size: 13px;
+        }
+        .overlay.practice {
+          padding-bottom: 16px;
+        }
+        .overlay.practice p {
+          max-width: 250px;
+          font-size: 12px;
+        }
+        .overlay.practice h2 {
+          display: none;
+        }
+        .note {
+          display: block;
+        }
+        .note details {
+          margin-bottom: 10px;
+        }
+        .under-field {
+          font-size: 11px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .meter i {
+          transition: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <header>
+        <h1>
+          Sob to Play <span style="white-space: nowrap">Flappy Bird</span>
+        </h1>
+        <p>A game which makes sobbing useful (letting a bird to fly)</p>
+      </header>
+      <div class="layout">
+        <section aria-label="Game">
+          <div class="field">
+            <canvas
+              id="game"
+              width="600"
+              height="510"
+              tabindex="0"
+              aria-label="Flappy Bird game. Sob or sniff into your microphone to flap. Press P to pause."
+              >Your browser needs canvas support to play this game.</canvas
+            >
+            <div class="scorebar">
+              <div>PIPES PASSED<strong id="score">0</strong></div>
+              <div class="best">BEST<strong id="best">0</strong></div>
+            </div>
+            <div class="overlay" id="overlay">
+              <svg
+                class="bird-doodle"
+                viewBox="0 0 100 76"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M19 40C10 19 33 9 50 14C73 12 85 34 75 51C63 65 29 66 19 40Z"
+                  stroke="#303730"
+                  stroke-width="2"
+                />
+                <path
+                  d="M20 39Q37 23 48 43Q32 52 22 42M78 32L96 40L78 44M34 62L31 71M48 63L48 72M13 28L4 23M13 37L2 36"
+                  stroke="#303730"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                />
+                <path d="M62 29L69 30" stroke="#303730" stroke-width="2" />
+                <path d="M64 35Q57 46 64 46Q70 46 64 35" fill="#8c9a81" />
+              </svg>
+              <span class="eyebrow" id="overlayKicker"></span>
+              <h2 id="overlayTitle">Sob to flap</h2>
+              <p id="overlayText">
+                Use a short sob or sniff to fly.<br />Stop to fall. Avoid the
+                pipes.
+              </p>
+              <button class="primary" id="overlayAction">
+                Set up microphone
+              </button>
+            </div>
+          </div>
+          <div class="under-field">
+            <span id="gameHint">Sob to flap. P to pause.</span
+            ><button class="secondary" id="pause" disabled>Pause</button>
+          </div>
+          <p
+            class="sr-only"
+            id="announcement"
+            role="status"
+            aria-live="polite"
+          ></p>
+        </section>
+        <aside aria-label="Controls and microphone setup">
+          <h2>How to play</h2>
+          <ol class="steps">
+            <li>
+              <span class="number">01</span>
+              <div>
+                Stay quiet for 2 seconds.<small
+                  >Let the mic adjust to your room.</small
+                >
+              </div>
+            </li>
+            <li>
+              <span class="number">02</span>
+              <div>
+                Try 3 short sobs or sniffs.<small
+                  >Pause between each sound.</small
+                >
+              </div>
+            </li>
+            <li>
+              <span class="number">03</span>
+              <div>
+                Sob to flap.<small>Stop to fall. Avoid the pipes.</small>
+              </div>
+            </li>
+          </ol>
+          <div class="control-box">
+            <button id="micAction" class="primary">Set up microphone</button>
+            <div class="status" id="status" role="status" aria-live="polite">
+              Your mic is off. Start when you’re ready.
+            </div>
+            <div
+              id="sampleProgress"
+              class="progress"
+              hidden
+              aria-label="Sound examples collected"
+            >
+              <span></span><span></span><span></span>
+            </div>
+            <div class="meter" id="meter" aria-hidden="true"></div>
+            <div class="meter-caption">
+              <span id="meterLabel">MIC OFF</span><span id="heard">—</span>
+            </div>
+            <p class="hint">
+              Microphone only. No camera.<br />Sound stays on your device.
+            </p>
+          </div>
+          <details class="adjust" id="adjust">
+            <summary>Mic &amp; play settings</summary>
+            <label for="device">Microphone</label
+            ><select id="device">
+              <option value="">Default microphone</option>
+            </select>
+            <label for="sensitivity"
+              >Sensitivity <output id="sensitivityValue">50</output></label
+            ><input
+              id="sensitivity"
+              type="range"
+              min="0"
+              max="100"
+              value="50"
+            />
+            <div class="range-labels">
+              <span>Fewer false flaps</span><span>Catch softer sounds</span>
+            </div>
+            <p class="hint">
+              Missing sobs? Move a little closer or turn this up. Too many
+              flaps? Turn it down. Keep music off while playing.
+            </p>
+            <label for="pace">Game pace</label
+            ><select id="pace">
+              <option value="gentle">Easy — wider gaps</option>
+              <option value="classic">Normal — smaller gaps</option>
+            </select>
+            <div class="setting-actions">
+              <button class="link-button" id="recalibrate" disabled>
+                Set up again</button
+              ><button class="link-button" id="micOff" disabled>
+                Turn mic off
+              </button>
+            </div>
+            <p class="hint">
+              Press P to pause. A new pace starts on your next run.
+            </p>
+          </details>
+        </aside>
+      </div>
+      <div class="note">
+        <details>
+          <summary>About this game</summary>
+          <p>This is a small web game called “Sob to Play Flappy Bird”.</p>
+          <p>
+            There are already too many Flappy Bird games on the internet. While
+            playing them, I noticed that most of the frustration comes from
+            suddenly hitting a pipe and losing everything in a second.
+          </p>
+          <p>
+            But I just wonder, if losing really feels that bad, what if I am already in a bad mood to play Flappy bird?
+          </p>
+          <p>
+            When people feel sad, many of them open their phones, watch videos,
+            scroll through social media, or post about what happened to ease
+            their feelings. Sometimes it helps, but sometimes it only makes them
+            feel worse. So instead of using a keyboard, mouse tracking, or even nose tracking,
+            I want to use sobbing as the input.
+          </p>
+          <p>
+            I thought it would be funny if sobbing could do something useful
+            instead. So in this game, every sob makes the bird fly.
+          </p>
+          <p>
+            Crying or sobbing becomes the thing that keeps the game going, and move on.
+          </p>
+          <p>
+            You can sob to fly. Crash into a pipe. Or perhaps laugh when
+            you hit a pipe.
+          </p>
+        </details>
+        <details>
+          <summary>Microphone &amp; privacy</summary>
+          <p>
+            The game learns the loudness and sound shape of your examples. It
+            listens for short, similar bursts. A quiet
+            room helps for better detection. Nothing is recorded or uploaded. Only your best sob scores
+            are saved in this browser.
+          </p>
+        </details>
+      </div>
+
+      <noscript
+        >Please enable JavaScript to play. The game runs entirely in your
+        browser.</noscript
+      >
+    </main>
+    <script>
+      "use strict";
+      // DETECTOR START — pure signal logic, also exercised by tests/detector.test.cjs.
+      const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+      const percentile = (values, q) => {
+        const a = [...values].sort((x, y) => x - y);
+        return a[Math.floor((a.length - 1) * q)] ?? -70;
+      };
+      const similarity = (a, b) => {
+        let dot = 0,
+          aa = 0,
+          bb = 0;
+        for (let i = 0; i < a.length; i++) {
+          dot += a[i] * b[i];
+          aa += a[i] * a[i];
+          bb += b[i] * b[i];
+        }
+        return dot / Math.max(1e-12, Math.sqrt(aa * bb));
+      };
+      class SobDetector {
+        constructor(floor = -65, profiles = []) {
+          this.floor = floor;
+          this.baseFloor = floor;
+          this.profiles = profiles;
+          this.sensitivity = 50;
+          this.reset();
+        }
+        reset(keepQuiet = false) {
+          const wasQuiet = keepQuiet && this.quiet >= 100;
+          this.burst = null;
+          this.quiet = wasQuiet ? 100 : 0;
+          this.lastFire = -Infinity;
+          this.lastTime = null;
+          this.armed = wasQuiet;
+        }
+        threshold() {
+          const snr = this.profiles.length
+            ? percentile(
+                this.profiles.map((p) => p.db - this.baseFloor),
+                0.5,
+              )
+            : 18;
+          return (
+            this.floor +
+            clamp(snr * 0.43 + (50 - this.sensitivity) * 0.1, 6, 22)
+          );
+        }
+        feed(frame, t, learning = false) {
+          if (this.lastTime !== null && t - this.lastTime > 120) this.reset();
+          const dt =
+            this.lastTime === null ? 0 : clamp(t - this.lastTime, 0, 60);
+          this.lastTime = t;
+          const threshold = this.threshold(),
+            above = frame.db > threshold,
+            below = frame.db < threshold - 3;
+          let flap = false,
+            sample = null;
+          if (below) {
+            this.quiet += dt;
+            if (this.quiet >= 100) {
+              if (
+                this.burst &&
+                learning &&
+                this.burst.ms >= 80 &&
+                this.burst.ms <= 1200
+              )
+                sample = this.profile(this.burst);
+              this.burst = null;
+              this.armed = true;
+              // Follow quiet frames slowly, within 6 dB of the room calibration.
+              if (!learning && frame.db > -95)
+                this.floor = clamp(
+                  this.floor +
+                    (frame.db - this.floor) * Math.min(dt / 8000, 0.01),
+                  this.baseFloor - 6,
+                  this.baseFloor + 6,
+                );
+            }
+          } else if (above) {
+            this.quiet = 0;
+            if (!this.burst && this.armed) {
+              this.burst = {
+                ms: 0,
+                n: 0,
+                sum: Array(frame.bands.length).fill(0),
+                db: -100,
+                fired: false,
+              };
+              this.armed = false;
+            }
+            if (this.burst) {
+              const b = this.burst;
+              b.ms += dt;
+              b.n++;
+              b.db = Math.max(b.db, frame.db);
+              frame.bands.forEach((v, i) => (b.sum[i] += v));
+              if (
+                !learning &&
+                !b.fired &&
+                b.ms >= 80 &&
+                b.ms <= 650 &&
+                t - this.lastFire >= 280
+              ) {
+                const p = this.profile(b);
+                const match =
+                  this.profiles.length &&
+                  Math.max(
+                    ...this.profiles.map((ref) =>
+                      similarity(p.bands, ref.bands),
+                    ),
+                  ) >=
+                    0.9 - this.sensitivity * 0.0018;
+                if (match) {
+                  flap = true;
+                  b.fired = true;
+                  this.lastFire = t;
+                }
+              }
+            }
+          } else {
+            this.quiet = 0;
+          }
+          return { flap, sample, threshold };
+        }
+        profile(b) {
+          return {
+            db: b.db,
+            bands: b.sum.map((v) => v / Math.max(1, b.n)),
+            duration: b.ms,
+          };
+        }
+      }
+      // DETECTOR END
+      const $ = (id) => document.getElementById(id),
+        canvas = $("game"),
+        ctx = canvas.getContext("2d");
+      const W = 600,
+        H = 510,
+        GROUND = 474,
+        reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+      let state = "home",
+        score = 0,
+        best = 0,
+        runPace = "gentle",
+        bird = { x: 150, y: 210, v: 0 },
+        pipes = [],
+        spawnTimer = 0,
+        flapGlow = 0;
+      let audio = null,
+        stream = null,
+        source = null,
+        analyser = null,
+        muteGain = null,
+        highpass = null,
+        lowpass = null,
+        raw = null,
+        spectrum = null,
+        audioTimer = null,
+        requestToken = 0;
+      let phase = "off",
+        detector = null,
+        roomFrames = [],
+        phaseStart = 0,
+        profiles = [],
+        lastMeter = 0,
+        noticeUntil = 0;
+      const bars = Array.from({ length: 28 }, () => {
+        const el = document.createElement("i");
+        $("meter").append(el);
+        return el;
+      });
+      function announce(text) {
+        $("announcement").textContent = text;
+      }
+      function status(text) {
+        $("status").textContent = text;
+      }
+      function readBest() {
+        try {
+          best =
+            Number(localStorage.getItem(`sob-best-sob-${$("pace").value}`)) ||
+            0;
+        } catch {
+          best = 0;
+        }
+        $("best").textContent = best;
+      }
+      function showOverlay(kicker, title, text, action) {
+        $("overlay").classList.remove("practice");
+        $("overlay").hidden = false;
+        $("overlayKicker").textContent = kicker;
+        $("overlayTitle").textContent = title;
+        $("overlayText").textContent = text;
+        $("overlayAction").textContent = action;
+      }
+      function setHome() {
+        state = "home";
+        pipes = [];
+        bird = { x: 150, y: 210, v: 0 };
+        $("pause").disabled = true;
+        showOverlay(
+          "",
+          "Sob to flap",
+          "Use a short sob or sniff to fly. Stop to fall. Avoid the pipes.",
+          "Set up microphone",
+        );
+      }
+      function ready() {
+        state = "ready";
+        pipes = [];
+        bird = { x: 150, y: 210, v: 0 };
+        $("pause").disabled = true;
+        showOverlay(
+          "",
+          "Practice",
+          "Try a sob or sniff. Each detected sound makes the bird flap.",
+          "Play",
+        );
+        $("overlay").classList.add("practice");
+        $("gameHint").textContent = "Try a sound before you start.";
+      }
+      function startRun() {
+        if (phase !== "ready") return;
+        runPace = $("pace").value;
+        readBest();
+        state = "playing";
+        score = 0;
+        $("score").textContent = 0;
+        bird = { x: 150, y: 245, v: -210 };
+        pipes = [];
+        spawnTimer = -0.7;
+        $("overlay").hidden = true;
+        $("pause").disabled = false;
+        $("pause").textContent = "Pause";
+        if (detector) detector.reset(true);
+        $("gameHint").textContent =
+          "Sob to flap. Pause between sounds. P pauses the game.";
+        canvas.focus({ preventScroll: true });
+      }
+      function flap() {
+        if (!["playing", "ready"].includes(state)) return;
+        bird.v = -255;
+        flapGlow = 0.25;
+      }
+      function endRun() {
+        state = "over";
+        $("pause").disabled = true;
+        if (score > best) {
+          best = score;
+          try {
+            localStorage.setItem(`sob-best-sob-${runPace}`, String(best));
+          } catch {}
+        }
+        $("best").textContent = best;
+        showOverlay(
+          `${score} ${score === 1 ? "PIPE" : "PIPES"} PASSED`,
+          "Game over",
+          "Try again when you’re ready.",
+          "Try again",
+        );
+        announce(`Run over. ${score} pipes passed.`);
+      }
+      function pauseGame() {
+        if (state !== "playing") return;
+        state = "paused";
+        $("pause").textContent = "Resume";
+        showOverlay("", "Paused", "Press Continue to resume.", "Continue");
+      }
+      async function resumeGame() {
+        {
+          if (phase !== "ready") {
+            status("Set up your mic again to keep playing.");
+            return;
+          }
+          try {
+            await audio.resume();
+          } catch {
+            status("Your mic needs to reconnect. Use Set up again.");
+            return;
+          }
+          if (audio.state !== "running" || stream.getAudioTracks()[0].muted) {
+            status("Your mic is paused. Try again or reconnect it.");
+            return;
+          }
+          detector.reset();
+        }
+        state = "playing";
+        $("overlay").hidden = true;
+        $("pause").textContent = "Pause";
+        canvas.focus({ preventScroll: true });
+      }
+      function update(dt) {
+        flapGlow = Math.max(0, flapGlow - dt);
+        if (state === "ready") {
+          bird.v += 370 * dt;
+          bird.y = clamp(bird.y + bird.v * dt, 100, 235);
+          if (bird.y === 235) bird.v = 0;
+          return;
+        }
+        if (state !== "playing") return;
+        bird.v = Math.min(390, bird.v + 440 * dt);
+        bird.y += bird.v * dt;
+        if (bird.y < 17) {
+          bird.y = 17;
+          bird.v = Math.max(0, bird.v);
+        }
+        if (bird.y + 12 >= GROUND) {
+          endRun();
+          return;
+        }
+        const gentle = runPace === "gentle",
+          speed = (gentle ? 116 : 143) + Math.min(score, 20) * 1.1,
+          gap = gentle ? 190 : 155;
+        spawnTimer += dt;
+        if (spawnTimer > 2.05) {
+          spawnTimer = 0;
+          const previous = pipes.length ? pipes[pipes.length - 1].y : 250;
+          pipes.push({
+            x: W + 15,
+            y: clamp(previous + (Math.random() - 0.5) * 155, 130, 345),
+            gap,
+            w: 57,
+            passed: false,
+          });
+        }
+        for (const p of pipes) {
+          p.x -= speed * dt;
+          const radius = 11;
+          if (
+            bird.x + radius > p.x - 4 &&
+            bird.x - radius < p.x + p.w + 4 &&
+            (bird.y - radius < p.y - p.gap / 2 ||
+              bird.y + radius > p.y + p.gap / 2)
+          ) {
+            endRun();
+            return;
+          }
+          if (!p.passed && p.x + p.w + 4 < bird.x - radius) {
+            p.passed = true;
+            score++;
+            $("score").textContent = score;
+            announce(`${score} pipes passed.`);
+          }
+        }
+        pipes = pipes.filter((p) => p.x > -80);
+      }
+      function stroke(points, color = "#303730", width = 1.6) {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = width;
+        ctx.beginPath();
+        points.forEach((p, i) => (i ? ctx.lineTo(...p) : ctx.moveTo(...p)));
+        ctx.stroke();
+      }
+      function cloud(x, y, s) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(s, s);
+        ctx.strokeStyle = "#c1c7b6";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(-30, 8);
+        ctx.bezierCurveTo(-46, -4, -27, -19, -15, -12);
+        ctx.bezierCurveTo(-10, -38, 25, -29, 27, -11);
+        ctx.bezierCurveTo(46, -16, 53, 10, 32, 12);
+        ctx.lineTo(-30, 8);
+        ctx.stroke();
+        ctx.restore();
+      }
+      function drawPipe(p, top) {
+        const edge = top ? p.y - p.gap / 2 : p.y + p.gap / 2,
+          y = top ? -10 : edge,
+          h = top ? edge + 10 : GROUND - edge;
+        ctx.fillStyle = "#dce2d0";
+        ctx.fillRect(p.x, y, p.w, h);
+        stroke(
+          [
+            [p.x, y],
+            [p.x + 1, y + h],
+            [p.x + p.w, y + h - 1],
+            [p.x + p.w - 1, y],
+          ],
+          "#59674f",
+        );
+        stroke(
+          [
+            [p.x + 5, y + 5],
+            [p.x + 6, y + h - 5],
+          ],
+          "#a9b69a",
+          1,
+        );
+        for (let k = 18; k < h - 6; k += 19)
+          stroke(
+            [
+              [p.x + p.w - 12, y + k + 5],
+              [p.x + p.w - 3, y + k],
+            ],
+            "#b1bca3",
+            1,
+          );
+        ctx.fillStyle = "#e7ebdd";
+        ctx.fillRect(p.x - 4, top ? edge - 13 : edge, p.w + 8, 13);
+        ctx.strokeStyle = "#59674f";
+        ctx.lineWidth = 1.6;
+        ctx.strokeRect(p.x - 4, top ? edge - 13 : edge, p.w + 8, 13);
+      }
+      function drawBird(x, y, v) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(clamp(v * 0.0012, -0.27, 0.4));
+        ctx.fillStyle = "#ffffff";
+        ctx.strokeStyle = "#303730";
+        ctx.lineWidth = 1.7;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 20, 16, -0.12, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        stroke([
+          [-18, 0],
+          [-28, -5],
+          [-24, 4],
+          [-18, 6],
+        ]);
+        stroke([
+          [18, -3],
+          [30, 3],
+          [19, 6],
+        ]);
+        ctx.beginPath();
+        ctx.moveTo(-13, 2);
+        ctx.quadraticCurveTo(-4, flapGlow > 0 ? -19 : -9, 5, 3);
+        ctx.quadraticCurveTo(-5, 12, -13, 2);
+        ctx.stroke();
+        stroke([
+          [8, -7],
+          [14, -6],
+        ]);
+        stroke([
+          [-6, 16],
+          [-9, 22],
+        ]);
+        stroke([
+          [3, 16],
+          [4, 22],
+        ]);
+        ctx.fillStyle = "#839779";
+        ctx.beginPath();
+        ctx.ellipse(12, 5, 2.2, 3.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+        if (flapGlow > 0) {
+          stroke(
+            [
+              [-33, 9],
+              [-40, 12],
+            ],
+            "#839779",
+          );
+          stroke(
+            [
+              [-27, 18],
+              [-32, 23],
+            ],
+            "#839779",
+          );
+        }
+        ctx.restore();
+      }
+      function render(t) {
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, W, H);
+        cloud(91, 108, 1);
+        cloud(382, 158, 0.8);
+        cloud(520, 65, 0.6);
+        stroke(
+          [
+            [0, 438],
+            [40, 433],
+            [74, 437],
+            [117, 428],
+            [172, 433],
+            [204, 423],
+            [260, 428],
+            [310, 416],
+            [370, 426],
+            [432, 419],
+            [485, 433],
+            [550, 427],
+            [600, 434],
+          ],
+          "#c3c9b8",
+          1,
+        );
+        pipes.forEach((p) => {
+          drawPipe(p, true);
+          drawPipe(p, false);
+        });
+        ctx.fillStyle = "#e3e7d8";
+        ctx.fillRect(0, GROUND, W, H - GROUND);
+        stroke(
+          [
+            [0, GROUND],
+            [190, GROUND + 1],
+            [390, GROUND - 1],
+            [600, GROUND],
+          ],
+          "#7e8b70",
+        );
+        for (let x = 13; x < W; x += 27)
+          stroke(
+            [
+              [x, GROUND + 15],
+              [x + 7, GROUND + 11],
+            ],
+            "#b7c1ac",
+            1,
+          );
+        drawBird(
+          bird.x,
+          bird.y + (state === "home" && !reduced ? Math.sin(t / 650) * 5 : 0),
+          bird.v,
+        );
+        if (state === "ready" && flapGlow > 0) {
+          ctx.fillStyle = "#5c7151";
+          ctx.font = "13px Arial";
+          ctx.fillText("flap!", bird.x + 35, bird.y - 18);
+        }
+      }
+      let lastTime = 0,
+        accumulator = 0;
+      function loop(t) {
+        const dt = lastTime ? Math.min((t - lastTime) / 1000, 0.1) : 0;
+        lastTime = t;
+        if (!document.hidden) {
+          accumulator += dt;
+          while (accumulator >= 1 / 120) {
+            update(1 / 120);
+            accumulator -= 1 / 120;
+          }
+          render(t);
+        } else accumulator = 0;
+        requestAnimationFrame(loop);
+      }
+      requestAnimationFrame(loop);
+      function micButtons() {
+        const busy = ["requesting", "room", "examples"].includes(phase);
+        $("micAction").disabled = phase === "ready";
+        $("micAction").textContent =
+          phase === "ready"
+            ? "Mic is ready ✓"
+            : busy
+              ? "Cancel setup"
+              : "Set up microphone";
+        $("recalibrate").disabled = !stream;
+        $("micOff").disabled = !stream;
+        $("device").disabled = busy;
+        $("meterLabel").textContent =
+          phase === "off"
+            ? "MIC OFF"
+            : phase === "requesting"
+              ? "WAITING FOR PERMISSION"
+              : "MIC ON";
+      }
+      function stopAudio() {
+        requestToken++;
+        clearInterval(audioTimer);
+        audioTimer = null;
+        if (stream) stream.getTracks().forEach((t) => t.stop());
+        if (source) source.disconnect();
+        if (analyser) analyser.disconnect();
+        if (muteGain) muteGain.disconnect();
+        if (audio) audio.close().catch(() => {});
+        audio =
+          stream =
+          source =
+          analyser =
+          muteGain =
+          highpass =
+          lowpass =
+            null;
+        detector = null;
+        profiles = [];
+        roomFrames = [];
+        phase = "off";
+        $("sampleProgress").hidden = true;
+        $("heard").textContent = "—";
+        bars.forEach((b) => (b.style.height = "15%"));
+        $("meter").classList.remove("active");
+        micButtons();
+      }
+      function micLost(text) {
+        if (state === "playing") pauseGame();
+        stopAudio();
+        status(text);
+        {
+          state = "home";
+          $("pause").disabled = true;
+          showOverlay("", "Microphone disconnected", text, "Set up microphone");
+        }
+      }
+      async function listDevices() {
+        try {
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          const selected =
+            stream?.getAudioTracks()[0]?.getSettings().deviceId ||
+            $("device").value;
+          $("device").replaceChildren(new Option("Default microphone", ""));
+          devices
+            .filter((d) => d.kind === "audioinput" && d.deviceId)
+            .forEach((d, i) =>
+              $("device").add(
+                new Option(d.label || `Microphone ${i + 1}`, d.deviceId),
+              ),
+            );
+          if ([...$("device").options].some((o) => o.value === selected))
+            $("device").value = selected;
+        } catch {}
+      }
+      async function setupMic() {
+        const chosen = $("device").value;
+        stopAudio();
+        const token = requestToken;
+        readBest();
+        state = "setup";
+        $("pause").disabled = true;
+        phase = "requesting";
+        micButtons();
+        showOverlay(
+          "",
+          "Allow microphone access",
+          "Allow your microphone in the browser, then leave the room quiet.",
+          "Cancel setup",
+        );
+        status("Allow microphone access in your browser.");
+        try {
+          if (!window.isSecureContext) throw { name: "InsecureContext" };
+          if (!navigator.mediaDevices?.getUserMedia)
+            throw { name: "Unsupported" };
+          const Audio = window.AudioContext || window.webkitAudioContext;
+          if (!Audio) throw { name: "Unsupported" };
+          // Create/resume from the button gesture, including on mobile Safari.
+          audio = new Audio({ latencyHint: "interactive" });
+          await audio.resume();
+          if (token !== requestToken) return;
+          const acquired = await navigator.mediaDevices.getUserMedia({
+            audio: {
+              deviceId: chosen ? { exact: chosen } : undefined,
+              channelCount: { ideal: 1 },
+              autoGainControl: { ideal: false },
+              noiseSuppression: { ideal: false },
+              echoCancellation: { ideal: false },
+            },
+            video: false,
+          });
+          // A permission dialog may finish after Cancel or a newer setup request.
+          if (token !== requestToken) {
+            acquired.getTracks().forEach((t) => t.stop());
+            return;
+          }
+          stream = acquired;
+          source = audio.createMediaStreamSource(stream);
+          highpass = audio.createBiquadFilter();
+          highpass.type = "highpass";
+          highpass.frequency.value = 100;
+          lowpass = audio.createBiquadFilter();
+          lowpass.type = "lowpass";
+          lowpass.frequency.value = 7800;
+          analyser = audio.createAnalyser();
+          analyser.fftSize = 1024;
+          analyser.smoothingTimeConstant = 0;
+          analyser.minDecibels = -100;
+          analyser.maxDecibels = -10;
+          // A silent output keeps the graph processing without playing the mic back.
+          muteGain = audio.createGain();
+          muteGain.gain.value = 0;
+          source
+            .connect(highpass)
+            .connect(lowpass)
+            .connect(analyser)
+            .connect(muteGain)
+            .connect(audio.destination);
+          raw = new Float32Array(analyser.fftSize);
+          spectrum = new Float32Array(analyser.frequencyBinCount);
+          const track = stream.getAudioTracks()[0];
+          track.addEventListener("ended", () => {
+            if (token === requestToken)
+              micLost("Microphone disconnected. Check it, then set up again.");
+          });
+          track.addEventListener("mute", () => {
+            if (token === requestToken && state === "playing") {
+              pauseGame();
+              status("Microphone interrupted. Check it before you resume.");
+            }
+          });
+          audio.addEventListener("statechange", () => {
+            if (
+              token === requestToken &&
+              audio &&
+              audio.state !== "running" &&
+              state === "playing"
+            ) {
+              pauseGame();
+              status("Audio paused. Press Continue to resume.");
+            }
+          });
+          await listDevices();
+          if (token !== requestToken) return;
+          phase = "room";
+          roomFrames = [];
+          phaseStart = performance.now();
+          micButtons();
+          status("Stay quiet for two seconds.");
+          $("overlayTitle").textContent = "Stay quiet for 2 seconds";
+          $("overlayText").textContent =
+            "We’re measuring the background sound.";
+          audioTimer = setInterval(sampleAudio, 20);
+        } catch (error) {
+          if (token !== requestToken) return;
+          stopAudio();
+          const messages = {
+            NotAllowedError:
+              "Mic access was blocked. Allow it in your browser’s site settings, then try again.",
+            NotFoundError: "No microphone found. Connect one, then try again.",
+            NotReadableError:
+              "Your mic is busy. Close other apps using it, then try again.",
+            OverconstrainedError:
+              "That mic is unavailable. Choose another microphone and try again.",
+            InsecureContext:
+              "Microphone play needs HTTPS or localhost. Open the game at a secure address.",
+            Unsupported:
+              "This browser cannot use the microphone here. Open the game in a browser with microphone support.",
+          };
+          const message =
+            messages[error.name] ||
+            "Could not start the microphone. Check its connection and browser permissions, then try again.";
+          setHome();
+          status(message);
+          $("overlayText").textContent = message;
+        }
+      }
+      function sampleAudio() {
+        if (!analyser || !audio || document.hidden || audio.state !== "running")
+          return;
+        const t = performance.now();
+        analyser.getFloatTimeDomainData(raw);
+        analyser.getFloatFrequencyData(spectrum);
+        let energy = 0,
+          peak = 0;
+        for (const v of raw) {
+          energy += v * v;
+          peak = Math.max(peak, Math.abs(v));
+        }
+        const db =
+          20 * Math.log10(Math.max(1e-6, Math.sqrt(energy / raw.length)));
+        const edges = [100, 250, 500, 1000, 2000, 4000, 7800],
+          bands = [];
+        for (let i = 0; i < edges.length - 1; i++) {
+          let sum = 0;
+          for (
+            let b = Math.ceil((edges[i] * analyser.fftSize) / audio.sampleRate);
+            b <
+            Math.min(
+              spectrum.length,
+              Math.ceil((edges[i + 1] * analyser.fftSize) / audio.sampleRate),
+            );
+            b++
+          )
+            sum += Math.pow(10, spectrum[b] / 10);
+          bands.push(Math.sqrt(sum));
+        }
+        const norm = Math.sqrt(bands.reduce((s, x) => s + x * x, 0)) || 1,
+          frame = { db, bands: bands.map((x) => x / norm) };
+        if (phase === "room") {
+          if (t - phaseStart > 500) roomFrames.push(db); // Ignore the graph's startup settling.
+          if (t - phaseStart >= 2500) {
+            const floor = Math.max(-85, percentile(roomFrames, 0.7));
+            if (
+              floor > -18 ||
+              percentile(roomFrames, 0.9) - percentile(roomFrames, 0.1) > 15
+            ) {
+              micLost(
+                "The room changed a lot. Try a quieter spot, then set up again.",
+              );
+              return;
+            }
+            detector = new SobDetector(floor);
+            phase = "examples";
+            phaseStart = t;
+            micButtons();
+            $("sampleProgress").hidden = false;
+            [...$("sampleProgress").children].forEach((el) =>
+              el.classList.remove("done"),
+            );
+            $("overlayTitle").textContent = "Try 3 short sounds";
+            $("overlayText").textContent =
+              "Sob or sniff, then pause. Repeat 3 times. A pretend sound works.";
+            status("Try one short sob or sniff, then pause. 0 of 3.");
+          }
+        } else if (phase === "examples" || phase === "ready") {
+          detector.sensitivity = Number($("sensitivity").value);
+          const result = detector.feed(frame, t, phase === "examples");
+          if (result.sample) {
+            profiles.push(result.sample);
+            $("sampleProgress").children[profiles.length - 1].classList.add(
+              "done",
+            );
+            status(
+              `Got it. ${profiles.length} of 3. Leave a pause, then try again.`,
+            );
+            $("overlayText").textContent =
+              `Got ${profiles.length} of 3. Pause, then make another short sob or sniff.`;
+            $("heard").textContent = `${profiles.length} / 3`;
+            if (profiles.length === 3) {
+              detector.profiles = profiles;
+              // The third example has already ended in a verified quiet gap.
+              detector.reset(true);
+              phase = "ready";
+              micButtons();
+              status("Ready. Try a sound and watch for “heard you”.");
+              ready();
+            }
+          }
+          if (result.flap) {
+            flap();
+            $("heard").textContent = "heard you ↑";
+            $("meter").classList.add("active");
+            noticeUntil = t + 450;
+          }
+          if (phase === "examples" && t - phaseStart > 18000) {
+            status(
+              "No luck? Check your mic is not muted. Try a short sound closer to it, then pause. Or cancel and choose a different mic.",
+            );
+            phaseStart = t;
+          }
+          if (peak > 0.97 && t > noticeUntil) {
+            status(
+              "A little too close. Move back, then set up again if needed.",
+            );
+            noticeUntil = t + 2500;
+          }
+        }
+        if (t - lastMeter > 65) {
+          lastMeter = t;
+          const floor = detector ? detector.floor : -75,
+            level = clamp((db - floor) / 36, 0, 1);
+          bars.forEach(
+            (bar, i) =>
+              (bar.style.height = `${12 + level * 88 * (0.3 + 0.7 * Math.abs(Math.sin(i * 1.7 + t / 180)))}%`),
+          );
+          if (t > noticeUntil) {
+            $("meter").classList.remove("active");
+            if (phase === "ready") $("heard").textContent = "listening";
+          }
+        }
+      }
+      $("micAction").onclick = () => {
+        if (["requesting", "room", "examples"].includes(phase)) {
+          stopAudio();
+          setHome();
+          status("Setup cancelled. Your mic is off.");
+        } else if (phase === "ready") {
+          if (state === "home") ready();
+        } else setupMic();
+      };
+      $("overlayAction").onclick = () => {
+        if (state === "setup") {
+          $("micAction").click();
+          return;
+        }
+        if (state === "paused") {
+          resumeGame();
+          return;
+        }
+        if (["ready", "over"].includes(state)) {
+          startRun();
+          return;
+        }
+        setupMic();
+      };
+      $("micOff").onclick = () => {
+        stopAudio();
+        setHome();
+        status("Your mic is off. Set it up again to play.");
+      };
+      $("recalibrate").onclick = setupMic;
+      $("device").onchange = () => {
+        if (stream) setupMic();
+      };
+      $("pace").onchange = () => {
+        if (state !== "playing" && state !== "paused") readBest();
+      };
+      $("sensitivity").oninput = () => {
+        $("sensitivityValue").textContent = $("sensitivity").value;
+      };
+      $("pause").onclick = () =>
+        state === "paused" ? resumeGame() : pauseGame();
+      document.addEventListener("keydown", (event) => {
+        if (
+          ["INPUT", "SELECT", "TEXTAREA", "BUTTON", "SUMMARY"].includes(
+            event.target.tagName,
+          ) ||
+          event.repeat
+        )
+          return;
+        if (event.code === "KeyP") {
+          if (state === "playing") pauseGame();
+          else if (state === "paused") resumeGame();
+        }
+      });
+      document.addEventListener("visibilitychange", () => {
+        lastTime = 0;
+        if (document.hidden) {
+          if (state === "playing") pauseGame();
+          if (phase === "room" || phase === "examples")
+            micLost(
+              "Setup paused when you left the page. Start again when you’re ready.",
+            );
+          if (detector) detector.reset();
+        } else if (phase === "ready")
+          status("Mic ready. Resume when you’re ready.");
+      });
+      window.addEventListener("pagehide", () => {
+        stopAudio();
+        setHome();
+      });
+      // Match the backing pixels to the display while retaining one logical playfield.
+      new ResizeObserver(() => {
+        const rect = canvas.getBoundingClientRect(),
+          ratio = Math.min(devicePixelRatio || 1, 2);
+        canvas.width = Math.round(rect.width * ratio);
+        canvas.height = Math.round(rect.height * ratio);
+        ctx.setTransform(canvas.width / W, 0, 0, canvas.height / H, 0, 0);
+      }).observe(canvas);
+      readBest();
+    </script>
+  </body>
+</html>
+
